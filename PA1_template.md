@@ -8,10 +8,9 @@ editor_options:
   chunk_output_type: inline
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-```{r  message=FALSE}
+
+
+```r
 library(dplyr)
 library(ggplot2)
 ```
@@ -19,8 +18,8 @@ library(ggplot2)
 
 ## Loading and preprocessing the data
 
-```{r}
 
+```r
 zipfile <- as.character(unzip("activity.zip", list = TRUE)$Name)
 activity <- read.csv(unz("activity.zip", "activity.csv"))
 activity$date <- as.Date(activity$date, "%Y-%m-%d")
@@ -30,11 +29,14 @@ activity$date <- as.Date(activity$date, "%Y-%m-%d")
 
 ## What is mean total number of steps taken per day?
 
-```{r echo=TRUE}
+
+```r
 stepsPerDay <- group_by(activity, date) %>% summarise(totalSteps = sum(steps))
 
 hist(stepsPerDay$totalSteps, breaks=nrow(stepsPerDay), main="Histogram of steps per day")
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ### Mean & Median of the total number of steps taken per day
 
@@ -46,34 +48,47 @@ I would add meanSteps = mean(steps) & medianSteps = median(steps) in the summari
 and print the results of these 2 variables by date (I can use xtable to print the table for this) **
 
 
-```{r meanMedian}
+
+```r
 summary(stepsPerDay$totalSteps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##      41    8841   10765   10766   13294   21194       8
 ```
  
 
 ## What is the average daily activity pattern?
-```{r}
+
+```r
 dailyPattern <- aggregate(activity$steps, by=list(activity$interval), FUN=mean, na.rm=TRUE)
 
 names(dailyPattern) <- c("interval", "avgSteps")
 plot(dailyPattern$interval, dailyPattern$avgSteps, pch=20, 
       xlab="Interval", ylab="Average Steps")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
 maxInterval <- dailyPattern$interval[which(dailyPattern$avgSteps == max(dailyPattern$avgSteps))]
 ```
 
-The interval with maximum # of average steps across days is `r maxInterval`
+The interval with maximum # of average steps across days is 835
 
 ## Imputing missing values
-```{r}
+
+```r
 noActivity <- is.na(activity$steps)
 ```
 
-There are `r sum(noActivity)` records with missing steps
+There are 2304 records with missing steps
 
 Update the missing values with the mean of the steps for that particular interval across days
 
-```{r}
+
+```r
 stepsCorrected <- sapply(seq_along(activity$steps), function(x) if (is.na(activity$steps[x]))
                                         return(dailyPattern$avgSteps[dailyPattern$interval == activity$interval[x]])
 									 else
@@ -88,16 +103,23 @@ stepsPerDay <- group_by(newActivity, date) %>% summarise(totalSteps = sum(stepsC
 hist(stepsPerDay$totalSteps, breaks=nrow(stepsPerDay), main="New Histogram of steps per day")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
 ### New Mean & Median of the total number of steps taken per day
 
-```{r newMeanMedian}
 
+```r
 summary(stepsPerDay$totalSteps)
+```
 
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    9819   10766   10766   12811   21194
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+
+```r
 dateClassification <- sapply(newActivity$date, 
                              function(x) {                                                     
                                      if(grepl("^S", weekdays(x))) return ("weekend")
@@ -115,8 +137,7 @@ mp <- ggplot(dtClassActivity, aes(interval, log10(stepsCorrected))) +
 print(mp)
 ```
 
-```{r echo=FALSE}
-rm(activity, stepsPerDay, dailyPattern, noActivity, stepsCorrected, newActivity,
-dateClassification, dtClassActivity, mp)
-```
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+
 
